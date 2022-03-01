@@ -1,8 +1,7 @@
 
 #python
 
-from importlib.resources import path
-from operator import gt
+
 from typing import Optional
 #pydantic
 from pydantic import BaseModel
@@ -14,6 +13,12 @@ from fastapi import Body, Query
 app = FastAPI()
 
 #models
+class Location(BaseModel):
+    city: str
+    state:str
+    country:str
+
+
 
 class Person (BaseModel):
     firt_name: str
@@ -63,5 +68,23 @@ def show_person(
          )
 ):
     return {person_id:"it exists!"}
+
+#validations :  request body
+@app.put("/person/{person_id}")
+def update_person(
+    person_id: int =Path(
+        ...,
+        title="person ID",
+        description=" this is the person ID",
+        gt =0
+    ),
+    person: Person = Body(...),
+    location:Location= Body(...)
+
+):
+    resultd = person.dict()
+    resultd.update(location.dict())
+    return resultd
+
 
 
