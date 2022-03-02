@@ -68,6 +68,7 @@ class PersonOut(PersonBase):
 class LoginOut(BaseModel):
     username: str = Field(
         ...,
+        min_lengt= 1,
         max_length= 20,
         example= "julian"
     )
