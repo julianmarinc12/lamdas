@@ -1,14 +1,16 @@
 
 #python
 
+
+from importlib.resources import path
 from typing import Optional
 from enum import Enum
 #pydantic
 from pydantic import BaseModel, Field
 
 #fastapi
-from fastapi import FastAPI, Path
-from fastapi import Body, Query
+from fastapi import FastAPI, Form, Path
+from fastapi import Body, Query,status
 
 app = FastAPI()
 
@@ -21,6 +23,7 @@ class HairColor(Enum):
     red = "red"
 
 class Location(BaseModel):
+
     city: str =Field(
         min_length= 1,
         max_length= 50,
@@ -37,14 +40,7 @@ class Location(BaseModel):
         example = "Colombia"
     )
 
-
-
-class Person (BaseModel):
-    firt_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=50,
-        example ="julian")
+class PersonBase(BaseModel):
     last_name: str = Field(
         ...,
         min_length=1,
@@ -59,20 +55,53 @@ class Person (BaseModel):
     hair_color: Optional[HairColor] = Field(default= None, example="black")
     is_married: Optional[bool] = Field(default=None, example = False)
 
+class Person (PersonBase):  
+    password : str = Field(
+        ...,
+        min_length= 8,
+        example = "julianmarinc"
+    )
 
-@app.get("/")
+class PersonOut(PersonBase):
+    pass
+
+class LoginOut(BaseModel):
+    username: str = Field(
+        ...,
+        max_length= 20,
+        example= "julian"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length= 20,
+        example= "julianmarinc"
+        
+    )
+
+@app.get(
+    path="/",
+     status_code=status.HTTP_200_OK
+    )
 def home():
     return{"Hello":"word"}
 
 #request and response body
 
-@app.post("/person/new")
+@app.post(
+    path="/person/new",
+    response_model=PersonOut,
+    status_code=status.HTTP_201_CREATED
+    )
 def create_person(person: Person = Body(...)):
     return person
 
 #validation query parameters
 
-@app.get("/person/detail")
+@app.get(
+    path="/person/detail",
+    status_code=status.HTTP_200_OK
+    )
 def show_person(
     name: Optional[str]=Query(
         None,
@@ -124,3 +153,11 @@ def update_person(
     resultd.update(location.dict())
     return resultd
     
+@app.post(
+    path="/login",
+    response_model=LoginOut,
+    status_code=status.HTTP_200_OK
+    )
+def login(username: str=Form(...),password: str=Form(...)):
+    return LoginOut
+   
