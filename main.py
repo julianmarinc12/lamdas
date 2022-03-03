@@ -2,14 +2,13 @@
 #python
 
 
-from importlib.resources import path
+
 from typing import Optional
 from enum import Enum
 #pydantic
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, EmailStr, Field
 #fastapi
-from fastapi import FastAPI, Form, Path
+from fastapi import Cookie, FastAPI, Form, Header, Path
 from fastapi import Body, Query,status
 
 app = FastAPI()
@@ -153,12 +152,48 @@ def update_person(
     resultd = person.dict()
     resultd.update(location.dict())
     return resultd
-    
+
+#form   
 @app.post(
     path="/login",
     response_model=LoginOut,
     status_code=status.HTTP_200_OK
     )
 def login(username: str=Form(...),password: str=Form(...)):
-    return LoginOut
+    
+    return LoginOut(username=username,password=password)
    
+
+#Cookies and headers parameters
+
+@app.post(
+    path = "/contact",
+    status_code=status.HTTP_200_OK
+)
+def contact(
+    first_name: str = Form(
+        ...,
+        min_length=1,
+        max_length=20,
+        example = "julian"
+    ),
+    last_name: str = Form(
+        ...,
+        min_length=1,
+        max_length=20,
+        example= "marin"
+    ),
+    email: EmailStr = Form(
+        ...,
+        example="julian@email.com"
+        ),
+    message: str = Form(
+        ...,
+        min_length=20,
+        example= "hola que mas pues vengo aqui buscandote"
+    ),
+    user_agent: Optional[str] = Header(default=None),
+    ads: Optional[str] = Cookie(default=None)
+):
+
+    return user_agent
