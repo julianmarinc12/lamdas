@@ -1,15 +1,23 @@
 
 #python
-
-
-
 from typing import Optional
 from enum import Enum
 #pydantic
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel 
+from pydantic import EmailStr
+from pydantic import Field
 #fastapi
-from fastapi import Cookie, FastAPI, Form, Header, Path
-from fastapi import Body, Query,status
+from fastapi import UploadFile
+from fastapi import Path
+from fastapi import Header
+from fastapi import Form
+from fastapi import File
+from fastapi import FastAPI
+from fastapi import Cookie   
+from fastapi import HTTPException
+from fastapi import status
+from fastapi import Query
+from fastapi import Body
 
 app = FastAPI()
 
@@ -81,7 +89,8 @@ class LoginOut(BaseModel):
 
 @app.get(
     path="/",
-     status_code=status.HTTP_200_OK
+     status_code=status.HTTP_200_OK,
+    tags=["Inicio"]
     )
 def home():
     return{"Hello":"word"}
@@ -91,16 +100,30 @@ def home():
 @app.post(
     path="/person/new",
     response_model=PersonOut,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
+    tags=["Persons"]
     )
 def create_person(person: Person = Body(...)):
+    """
+    - create person
+
+    - this path operation creates a person in the app y save the information in la dababase
+
+    - parameterr:
+      - Request body person:
+        - **person : Person** -> a person model whit first name,last name, age, hair color and marital status
+    - return a person model whit first name, last name, age , hair color and marital status
+
+    """
     return person
 
 #validation query parameters
 
 @app.get(
     path="/person/detail",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["Persons"]
+  
     )
 def show_person(
     name: Optional[str]=Query(
@@ -122,7 +145,12 @@ def show_person(
 
 #validaciones: path Parameters
 
-@app.get("/person/detail/{person_id}")
+persons = [1,2,3,4]
+
+@app.get(
+    "/person/detail/{person_id}",
+    tags=["Persons"]
+    )
 def show_person(
     person_id: int = Path(
         ...,
@@ -133,10 +161,18 @@ def show_person(
         
          )
 ):
+    if person_id not in persons:
+        raise HTTPException(
+            status_code= status.HTTP_404_NOT_FOUND,
+            detail= "!this person doesno't exist"
+        )
     return {person_id:"it exists!"}
 
 #validations :  request body
-@app.put("/person/{person_id}")
+@app.put(
+    "/person/{person_id}",
+    tags=["Persons"]
+    )
 def update_person(
     person_id: int =Path(
         ...,
@@ -157,7 +193,8 @@ def update_person(
 @app.post(
     path="/login",
     response_model=LoginOut,
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["Persons"]
     )
 def login(username: str=Form(...),password: str=Form(...)):
     
@@ -168,7 +205,9 @@ def login(username: str=Form(...),password: str=Form(...)):
 
 @app.post(
     path = "/contact",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    tags=["contact"]
+    
 )
 def contact(
     first_name: str = Form(
@@ -197,3 +236,19 @@ def contact(
 ):
 
     return user_agent
+
+#files
+@app.post(
+    path = "/post-image",
+    tags=["image"]
+
+
+)
+def post_image(
+    image: UploadFile = File(...)
+):
+    return{
+        "filename": image.filename,
+        "format":image.content_type,
+        "size(kb)":round(len(image.file.read())/1024, ndigits=3)
+    }
